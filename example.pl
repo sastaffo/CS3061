@@ -1,0 +1,9 @@
+% sample knowledge base
+q:- a,b.
+q:- c.
+a:- f.
+c:- b.
+c:- d,e,f.
+d:- e.
+e.
+f:- e,d.
