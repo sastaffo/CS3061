@@ -1,3 +1,5 @@
+% path: ['C:/Users/sarah/Documents/college/3rdYear/ai/astar.pl']
+
 % sample knowledge base
 q:- a,b.
 q:- c.
@@ -12,7 +14,7 @@ f:- e,d.
 % cost supply always >= 1
 arc([Head|Tail],Node,Cost,KB) :-
 	member([Head|NewList],KB),	% checks if NewList with prepended Head is in KB
-	append(NewList,Tail,Node),	% NewList is T with Node appended
+	append(NewList,Tail,Node),	% NewList is Tail with Node appended
 	length(NewList,NLLength),	% the length of NewList is NLLength
 	Cost is NLLength+1. 		% NLLength = Cost - 1
 
@@ -28,9 +30,9 @@ search([Node|_]) :- goal(Node).
 % modify so that:
 
 search([Node|More]) :-
-	findall(X,arc(Node,X),Children),
-	% Children = list of all X that satisfy arc(Node,X)
-	addtofrontier(Children,More,New),
+	findall(X,arc(Node,X),SatisfiesList),
+	% SatisfiesList = list of all X that satisfy arc(Node,X)
+	addtofrontier(SatisfiesList,More,New),
 	search(New).
 
 % astar(+Node, ?Path, ?Cost, +KB)
