@@ -1,14 +1,13 @@
 % path: ['C:/Users/sarah/Documents/college/3rdYear/ai/incomplete.pl']
 
 /* test:
-initKB('C:/Users/sarah/Documents/college/3rdYear/ai/example.pl'),
-astar([q], Path, Cost).
+initKB('C:/Users/sarah/Documents/college/3rdYear/ai/example'),
+aStar([q], Path, Cost).
 */
 
 
 % dynamic predicate kb/1
 :- dynamic(kb/1).
-kb(KB);
 
 
 % makeKB/1
@@ -55,10 +54,10 @@ initKB(File) :-
 % arc finds possible actions that can be taken and their cost
 % returns possible destination node and the cost of the arc to that node
 arc([Head|Tail],Node,Cost,KB) :-
-		Cost is NLLength + 1, 			% NLLength = Cost - 1
 		member([Head | NewList], KB),	% checks if Head+NewList is in KB
 		append(NewList, Tail, Node),	% NewList is Tail with Node appended
-		length(NewList, NLLength).		% the length of NewList is NLLength
+		length(NewList, NLLength),		% the length of NewList is NLLength
+		Cost is NLLength + 1. 			% NLLength = Cost - 1
 
 
 % heuristic/2
@@ -76,14 +75,14 @@ goal([]).
 % uses the total expected cost (cost + heuristic) for both Nodes to
 % determine the lower-cost Node.
 lessthan([Node1,Cost1],[Node2,Cost2]) :-
+		% gets heuristics for Nodes
+		heuristic(Node1, HVal1),
+		heuristic(Node2, HVal2),
 		% calculates total f(Node) cost of each node
 		F1 is Cost1 + HVal1,
 		F2 is Cost2 + HVal2,
 		% checks if f(Node1) <= f(Node2)
-		F1 =< F2,
-		% gets heuristics for Nodes
-		heuristic(Node1, HVal1),
-		heuristic(Node2, HVal2).
+		F1 =< F2.
 
 
 % addtofrontier/3
@@ -91,46 +90,46 @@ lessthan([Node1,Cost1],[Node2,Cost2]) :-
 % f(node) = cost(node) + h(node)
 % 'Frontier' is the queue with the next node to expand at the head
 addtofrontier(Children, InList, Queue) :-
-		findSmallestNode(PossibleQueue, Queue),
-		append(Children, InList, PossibleQueue).
+		append(Children, InList, PossibleQueue),
+		findSmallestNode(PossibleQueue, Queue).
 
 
 % findSmallestHead/2
 % returns the list sorted so that the node with the lowest cost is at the head
 findSmallestNode([List], [List]).
 findSmallestNode([CurrentHead | UnsortedTail], SortedTail) :-
+		CurrentHead = [CurrNode, CurrCost, _],  % first two elements of CurrentHead
+		PreviousHead = [PrevNode, PrevCost, _], % first two elements of PreviousHead
 		findSmallestNode(UnsortedTail, [PreviousHead | PreviousSort]),
 		(lessthan([PrevNode, PrevCost],[CurrNode, CurrCost]) -> % if
-				Sort = [PreviousHead, CurrentHead | PreviousSort]; % then
-				Sort = [CurrentHead, PreviousHead | PreviousSort]), % else
-		CurrentHead = [CurrNode, CurrCost, _],  % first two elements of CurrentHead
-		PreviousHead = [PrevNode, PrevCost, _]. % first two elements of PreviousHead
+				SortedTail = [PreviousHead, CurrentHead | PreviousSort]; % then
+				SortedTail = [CurrentHead, PreviousHead | PreviousSort]). % else
 
 
 
 % aStar
 % return a list Path to the goal node [] with minimal Cost, given Node and KB
 % aStar/3
-aStar(Node,Path,Cost) :- kb(KB), astar(Node,Path,Cost,KB).
+aStar(Node,Path,Cost) :- kb(KB), aStar(Node,Path,Cost,KB).
 % aStar/4
-aStar(Node, [Node], 0, _).
-aStar(Node, Path, Cost, KB) :- astar([Node, 0, [Node]], Path, Cost, KB, []).
+aStar(Node, [Node], 0, _) :- goal(Node).
+aStar(Node, Path, Cost, KB) :- aStar([Node, 0, [Node]], Path, Cost, KB, []).
 % aStar/6
 aStar([Node, TotalCost, TotalPath], TotalPath, TotalCost, _, _) :- goal(Node).
-aStar([Node, OldCost, OldPath], NewPath, NewCost, KB, Frontier) :-
+aStar([Node, OldCost, OldPath], ReturnPath, ReturnCost, KB, Frontier) :-
 		% finds all Children of current Node
 		findall(
 				% concats list
-				[Head, NodeCost, [Head | NodePath]],
+				[Head, NodeCost, [Head | OldPath]],
 				% all children of current Node
 				(arc(Node, Head, NewCost, KB), NodeCost is NewCost + OldCost),
 				% from list Children
 				Children ),
 		% add children to the frontier to find which path to take
 		addtofrontier(Children, Frontier, ReturnList),
-		% concat list
+		% concat listr
 		ReturnList = [AddedNodes | NewFrontier],
-		% call astar recursively
-		astar(AddedNodes, NewPath, NewCost, KB, NewFrontier).
+		% call aStar recursively
+		aStar(AddedNodes, ReturnPath, ReturnCost, KB, NewFrontier).
 
 %
